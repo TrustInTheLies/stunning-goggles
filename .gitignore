@@ -1,0 +1,4 @@
+/target
+/static
+.env
+data.json
