@@ -1,4 +1,5 @@
 /target
 /static
+/data
 .env
 data.json
