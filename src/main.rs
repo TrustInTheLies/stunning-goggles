@@ -50,6 +50,17 @@ struct User {
     token: Option<String>,
 }
 
+#[derive(Serialize, Deserialize)]
+struct Song {
+    title: String,
+    album: String,
+    artist: String,
+    genre: String,
+    year: i16,
+    url: String,
+    image_url: String,
+}
+
 #[tokio::main]
 async fn main() {
     let db = Database::connect(dotenv!("DATABASE_URL")).await.unwrap();
@@ -67,7 +78,6 @@ async fn main() {
         .route("/login", post(login))
         .route("/logout", post(logout))
         .route("/tracks", get(get_tracks))
-        .route("/tracks/:id", get(get_track))
         .route("/add_favourite", post(add_favourite))
         .route("/delete_favourite", delete(delete_favourite))
         .route("/get_favourite", get(get_favourite))
@@ -172,7 +182,7 @@ async fn login(
             let token = encode(
                 &Header::default(),
                 &claims,
-                &EncodingKey::from_secret(Uuid::new_v4().as_bytes()),
+                &EncodingKey::from_secret(dotenv!("JWT_SECRET").as_bytes()),
             )
             .map_err(|_| {
                 (
@@ -204,8 +214,13 @@ async fn login(
     }
 }
 async fn logout() {}
-async fn get_tracks() {}
-async fn get_track() {}
+async fn get_tracks() -> Result<Json<Vec<Song>>, StatusCode> {
+    let text =
+        std::fs::read_to_string("data.json").map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let data: Vec<Song> =
+        serde_json::from_str(&text).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(data))
+}
 async fn add_favourite() {}
 async fn delete_favourite() {}
 async fn get_favourite() {}
